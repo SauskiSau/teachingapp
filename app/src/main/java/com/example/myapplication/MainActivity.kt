@@ -357,6 +357,20 @@ fun QuestionViewer(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Button(
+                onClick = {
+                    prefs.edit().remove("studied").apply()
+                    studiedQuestions = emptySet()
+                    currentIndex = 0
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) {
+                Text("🔄 Сбросить прогресс")
+            }
+
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             Button(onClick = { onBack() }) {
                 Text("⬅ Назад к выбору файла")
             }
