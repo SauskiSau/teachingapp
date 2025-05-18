@@ -20,16 +20,81 @@ import com.example.myapplication.ui.theme.MyApplicationTheme
 import java.io.*
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
-
-
+import androidx.activity.compose.BackHandler
 
 class MainActivity : ComponentActivity() {
 
     private val PICK_FILE_REQUEST = 1
     private val questionsState = mutableStateOf<List<Question>>(emptyList())
+    private var fileListState by mutableStateOf<List<File>>(emptyList())
     private lateinit var sharedPreferences: android.content.SharedPreferences
     private var currentFileName: String = "default"
     private var currentScreen by mutableStateOf("main") // или "question"
+
+
+    private fun getFileList(dir: File): List<File> {
+        return dir.listFiles()
+            ?.filter { it.isDirectory }
+            ?.flatMap { folder -> folder.listFiles()?.filter { it.isFile } ?: emptyList() }
+            ?: emptyList()
+    }
+
+
+    fun readQuestionsFromFile(file: File) {
+        val questions = mutableListOf<Question>()
+
+        try {
+            val lines = file.readLines()
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.isEmpty()) {
+                    i++
+                    continue
+                }
+
+                // Формат 1: вопрос и ответ на одной строке через ?
+                if ('?' in line && !line.endsWith("?") && line.count { it == '?' } == 1) {
+                    val parts = line.split("?")
+                    val questionText = parts[0].trim() + "?"
+                    val answerText = parts[1].trim()
+                    questions.add(Question(questionText, answerText))
+                    i++
+                }
+
+                // Формат 2: вопрос и ответ на следующей строке (возможно с "Ответ:")
+                else if (i + 1 < lines.size && lines[i].trim().endsWith("?")) {
+                    val questionText = lines[i].trim()
+                    val nextLine = lines[i + 1].trim()
+
+                    val answerText = if (nextLine.lowercase().startsWith("ответ:")) {
+                        nextLine.removePrefix("Ответ:").removePrefix("ответ:").trim()
+                    } else {
+                        nextLine
+                    }
+
+                    questions.add(Question(questionText, answerText))
+                    i += 2
+                }
+
+                // Неизвестный формат
+                else {
+                    i++
+                }
+            }
+
+            questionsState.value = questions
+            Log.d("DEBUG", "Вопросов загружено: ${questions.size}")
+
+        } catch (e: IOException) {
+            e.printStackTrace()
+            Toast.makeText(this, "Ошибка чтения файла", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun refreshFileList() {
+        fileListState = getFileList(filesDir)
+    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -38,9 +103,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyApplicationTheme {
+                BackHandler(enabled = currentScreen != "main") {
+                    questionsState.value = emptyList()
+                    currentScreen = "main"
+                }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "main" -> MainScreen(
+                            fileList = fileListState, // ✅ ВАЖНО
                             onFileSelected = { file ->
                                 currentFileName = file.nameWithoutExtension
                                 readQuestionsFromFile(file)
@@ -49,8 +120,13 @@ class MainActivity : ComponentActivity() {
                             onUploadClick = {
                                 openFilePickerAndReload()
                             },
+                            onDeleteFile = {
+                                refreshFileList()
+                            },
                             modifier = Modifier.padding(innerPadding)
                         )
+
+
                         "question" -> QuestionViewer(
                             questions = questionsState.value,
                             fileKey = currentFileName,
@@ -64,16 +140,18 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
     }
 
-
-    private fun openFilePickerAndReload() {
+    private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "*/*"
         startActivityForResult(Intent.createChooser(intent, "Выберите файл"), PICK_FILE_REQUEST)
     }
 
+    private fun openFilePickerAndReload() {
+        questionsState.value = emptyList()
+        openFilePicker()
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -83,8 +161,6 @@ class MainActivity : ComponentActivity() {
             uri?.let {
                 val fileName = getFileName(it)
                 saveFileToInternalStorage(it, fileName)
-
-                // ✅ возвращаемся на главный экран, чтобы список обновился
                 currentScreen = "main"
             }
         }
@@ -119,73 +195,26 @@ class MainActivity : ComponentActivity() {
 
             Toast.makeText(this, "Файл сохранён", Toast.LENGTH_SHORT).show()
             readQuestionsFromFile(destinationFile)
-            currentScreen = "main"
+            refreshFileList()
 
+            currentScreen = "main"
 
         } catch (e: Exception) {
             e.printStackTrace()
             Toast.makeText(this, "Ошибка при сохранении", Toast.LENGTH_SHORT).show()
         }
     }
-
-    private fun readQuestionsFromFile(file: File) {
-        val questions = mutableListOf<Question>()
-
-        try {
-            val lines = file.readLines()
-            var i = 0
-            while (i < lines.size) {
-                val line = lines[i].trim()
-                if (line.isEmpty()) {
-                    i++
-                    continue
-                }
-
-                // Формат 1: вопрос и ответ на одной строке (через ?)
-                if ('?' in line && !line.endsWith("?") && line.count { it == '?' } == 1) {
-                    val parts = line.split("?")
-                    val questionText = parts[0].trim() + "?"
-                    val answerText = parts[1].trim()
-                    questions.add(Question(questionText, answerText))
-                    i++
-                }
-
-                // Формат 2: две строки — вопрос и сразу за ним ответ
-                else if (i + 1 < lines.size && lines[i].endsWith("?")) {
-                    val questionText = lines[i].trim()
-                    val answerText = lines[i + 1].trim()
-                    questions.add(Question(questionText, answerText))
-                    i += 2
-                }
-
-                // Неизвестный формат — пропускаем
-                else {
-                    i++
-                }
-            }
-
-            questionsState.value = questions
-            Log.d("DEBUG", "Вопросов загружено: ${questions.size}")
-
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Toast.makeText(this, "Ошибка чтения файла", Toast.LENGTH_SHORT).show()
-        }
-    }
 }
 
 @Composable
 fun MainScreen(
+    fileList: List<File>,
     onFileSelected: (File) -> Unit,
     onUploadClick: () -> Unit,
+    onDeleteFile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val filesDir = context.filesDir
-
-    // ✅ Теперь fileList может обновляться
-    val fileList = getFileList(filesDir)
-
 
     Column(
         modifier = modifier
@@ -196,9 +225,6 @@ fun MainScreen(
     ) {
         Text("Выберите загруженный файл:", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(16.dp))
-
-        val fileList = getFileList(filesDir)
-
 
         fileList.forEach { file ->
             Row(
@@ -217,6 +243,7 @@ fun MainScreen(
                 Button(
                     onClick = {
                         file.parentFile?.deleteRecursively()
+                        onDeleteFile() // 🟢 обновляем список в MainActivity
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) {
@@ -233,8 +260,18 @@ fun MainScreen(
         ) {
             Text("📁 Загрузить новый файл")
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "⚠ Формат: вопрос — на одной строке, ответ — сразу на следующей строке. Без пустых строк между ними.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
+
+
 
 
 private fun getFileList(dir: File): List<File> {
@@ -400,8 +437,10 @@ private fun getStoredSet(context: Context, fileKey: String): Set<Int> {
 fun GreetingPreview() {
     MyApplicationTheme {
         MainScreen(
+            fileList = emptyList(), // Просто заглушка
             onFileSelected = {},
             onUploadClick = {},
+            onDeleteFile = {},
             modifier = Modifier
         )
     }
