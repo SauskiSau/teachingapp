@@ -101,6 +101,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
+        refreshFileList()
+
         setContent {
             MyApplicationTheme {
                 BackHandler(enabled = currentScreen != "main") {
