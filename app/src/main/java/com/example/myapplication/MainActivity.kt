@@ -21,13 +21,22 @@ import java.io.*
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.text.style.TextAlign
+
+data class Question(
+    val text: String,
+    val answer: String
+)
 
 class MainActivity : ComponentActivity() {
 
+
+    // Код состояния
     private val PICK_FILE_REQUEST = 1
     private val questionsState = mutableStateOf<List<Question>>(emptyList())
     private var fileListState by mutableStateOf<List<File>>(emptyList())
-    private lateinit var sharedPreferences: android.content.SharedPreferences
     private var currentFileName: String = "default"
     private var currentScreen by mutableStateOf("main") // или "question"
 
@@ -39,7 +48,7 @@ class MainActivity : ComponentActivity() {
             ?: emptyList()
     }
 
-
+    // 📄 Чтение вопросов из файла
     fun readQuestionsFromFile(file: File) {
         val questions = mutableListOf<Question>()
 
@@ -91,7 +100,7 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, "Ошибка чтения файла", Toast.LENGTH_SHORT).show()
         }
     }
-
+    // 📂 Обновление списка файлов
     private fun refreshFileList() {
         fileListState = getFileList(filesDir)
     }
@@ -101,19 +110,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        refreshFileList()
+        refreshFileList() // ✅ Загружаем список файлов при старте
 
         setContent {
             MyApplicationTheme {
+                // 🔙 Обработка кнопки "Назад"
                 BackHandler(enabled = currentScreen != "main") {
                     questionsState.value = emptyList()
                     currentScreen = "main"
                 }
-
+                // 🧱 Основная оболочка интерфейса
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "main" -> MainScreen(
-                            fileList = fileListState, // ✅ ВАЖНО
+                            fileList = fileListState, // ⬅️ Передаём список файлов
                             onFileSelected = { file ->
                                 currentFileName = file.nameWithoutExtension
                                 readQuestionsFromFile(file)
@@ -143,7 +153,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    // 📥 Открытие выбора файла
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "*/*"
@@ -154,7 +164,7 @@ class MainActivity : ComponentActivity() {
         questionsState.value = emptyList()
         openFilePicker()
     }
-
+    // 🔁 После выбора файла
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -167,7 +177,7 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
+    // 🔎 Получаем имя файла
     private fun getFileName(uri: Uri): String {
         var name = "неизвестно.txt"
         val cursor = contentResolver.query(uri, null, null, null, null)
@@ -181,7 +191,7 @@ class MainActivity : ComponentActivity() {
         }
         return name
     }
-
+    // 💾 Сохраняем выбранный файл во внутреннее хранилище
     private fun saveFileToInternalStorage(uri: Uri, fileName: String) {
         try {
             val inputStream = contentResolver.openInputStream(uri)
@@ -196,7 +206,7 @@ class MainActivity : ComponentActivity() {
             outputStream.close()
 
             Toast.makeText(this, "Файл сохранён", Toast.LENGTH_SHORT).show()
-            readQuestionsFromFile(destinationFile)
+            readQuestionsFromFile(destinationFile) // 📘 Загружаем вопросы из файла
             refreshFileList()
 
             currentScreen = "main"
@@ -216,12 +226,12 @@ fun MainScreen(
     onDeleteFile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
 
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(32.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         verticalArrangement = Arrangement.Top,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -273,16 +283,6 @@ fun MainScreen(
     }
 }
 
-
-
-
-private fun getFileList(dir: File): List<File> {
-    return dir.listFiles()?.filter { it.isDirectory }?.mapNotNull { it.listFiles()?.firstOrNull() } ?: emptyList()
-}
-
-
-
-
 @Composable
 fun QuestionViewer(
     questions: List<Question>,
@@ -310,45 +310,66 @@ fun QuestionViewer(
         Column(
             modifier = modifier
                 .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center,
+                .verticalScroll(rememberScrollState())
+                .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text("Изучено ${studiedQuestions.size} из ${questions.size}", style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = isRandom,
-                    onCheckedChange = {
-                        isRandom = it
-                        currentIndex = 0
-                    }
-                )
+                Checkbox(checked = isRandom, onCheckedChange = {
+                    isRandom = it
+                    currentIndex = 0
+                })
                 Text("🔀 Случайный порядок")
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(
-                    checked = hideAnswers,
-                    onCheckedChange = { hideAnswers = it }
-                )
+                Checkbox(checked = hideAnswers, onCheckedChange = { hideAnswers = it })
                 Text("Скрывать ответы")
             }
-
 
             Spacer(modifier = Modifier.height(12.dp))
             Text("Вопрос ${currentIndex + 1} из ${remainingQuestions.size}", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text(current.text, style = MaterialTheme.typography.bodyLarge)
+
+            Box(   //бокс вопроса
+                modifier = Modifier
+                    .heightIn(min = 80.dp, max = 130.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = current.text,
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Start
+                )
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
+
+            // ✅ Отображение ответа или кнопки
             if (hideAnswers && !showAnswer) {
                 Button(onClick = { showAnswer = true }) {
                     Text("Показать ответ 👁️")
                 }
             } else {
-                Text("Ответ: ${current.answer}", style = MaterialTheme.typography.bodyMedium)
+                Box(
+                    modifier = Modifier
+                        .heightIn(min = 80.dp, max = 150.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "Ответ: ${current.answer}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Start
+                    )
+                }
             }
+
+            // ✅ Все кнопки всегда отображаются
             Spacer(modifier = Modifier.height(32.dp))
 
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
@@ -356,12 +377,12 @@ fun QuestionViewer(
                     onClick = {
                         if (currentIndex > 0) {
                             currentIndex--
-                            showAnswer = false // 👈 тоже сбрасываем
+                            showAnswer = false
                         }
                     },
                     enabled = currentIndex > 0
                 ) {
-                    Text("Назад")
+                    Text("⬅ Назад")
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))
@@ -370,12 +391,12 @@ fun QuestionViewer(
                     onClick = {
                         if (currentIndex < remainingQuestions.size - 1) {
                             currentIndex++
-                            showAnswer = false // 👈 сбрасываем, чтобы ответ снова был скрыт
+                            showAnswer = false
                         }
                     },
                     enabled = currentIndex < remainingQuestions.size - 1
                 ) {
-                    Text("Вперёд")
+                    Text("Вперёд ➡")
                 }
             }
 
@@ -385,7 +406,9 @@ fun QuestionViewer(
                 onClick = {
                     val realIndex = questions.indexOf(current)
                     studiedQuestions = studiedQuestions + realIndex
-                    prefs.edit().putStringSet("studied", studiedQuestions.map { it.toString() }.toSet()).apply()
+                    prefs.edit()
+                        .putStringSet("studied", studiedQuestions.map { it.toString() }.toSet())
+                        .apply()
                     if (currentIndex >= remainingQuestions.size - 1) {
                         currentIndex = 0
                     }
@@ -407,16 +430,22 @@ fun QuestionViewer(
                 Text("🔄 Сбросить прогресс")
             }
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = { onBack() }) {
                 Text("⬅ Назад к выбору файла")
             }
         }
+
     } else {
-        Column(modifier = Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text("Все вопросы изучены 🎉")
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text("Все вопросы изучены 🎉", style = MaterialTheme.typography.titleLarge)
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { onBack() }) {
                 Text("⬅ Назад к выбору файла")
@@ -424,6 +453,7 @@ fun QuestionViewer(
         }
     }
 }
+
 
 
 private fun getStoredSet(context: Context, fileKey: String): Set<Int> {
@@ -447,11 +477,3 @@ fun GreetingPreview() {
         )
     }
 }
-
-
-
-
-data class Question(
-    val text: String,
-    val answer: String
-)
