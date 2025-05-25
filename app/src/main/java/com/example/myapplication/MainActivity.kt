@@ -173,7 +173,6 @@ class MainActivity : ComponentActivity() {
             uri?.let {
                 val fileName = getFileName(it)
                 saveFileToInternalStorage(it, fileName)
-                currentScreen = "main"
             }
         }
     }
