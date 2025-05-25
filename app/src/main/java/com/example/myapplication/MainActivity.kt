@@ -105,7 +105,6 @@ class MainActivity : ComponentActivity() {
         fileListState = getFileList(filesDir)
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
