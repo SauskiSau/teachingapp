@@ -461,7 +461,16 @@ fun QuestionViewer(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Button(onClick = { /* логика */ }) {
+            Button(onClick = { val realIndex = questions.indexOf(current)
+                studiedQuestions = studiedQuestions + realIndex
+                prefs.edit().putStringSet("studied", studiedQuestions.map { it.toString() }.toSet()).apply()
+                showAnswer = false
+                if (currentIndex < remainingQuestions.size - 1) {
+                    currentIndex += 1
+                } else {
+                    onBack()
+                }
+            }) {
                 Text("Изучен")
                 Spacer(Modifier.width(8.dp))
                 Icon(Icons.Default.Check, contentDescription = null)
@@ -471,7 +480,9 @@ fun QuestionViewer(
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = { /* логика */ },
+                onClick = {prefs.edit().remove("studied").apply()
+                    studiedQuestions = emptySet()
+                    currentIndex = 0},
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
             ) {
                 Text("Сбросить прогресс")
