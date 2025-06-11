@@ -37,6 +37,13 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material3.TextField
+import java.io.File
+import androidx.compose.material.icons.filled.Edit
+import com.google.accompanist.insets.navigationBarsWithImePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+
+
 
 data class Question(
     val text: String,
@@ -138,21 +145,30 @@ class MainActivity : ComponentActivity() {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         "main" -> MainScreen(
-                            fileList = fileListState, // ⬅️ Передаём список файлов
-                            onFileSelected = { file ->
+                        fileList = fileListState,
+                        onFileSelected = { file ->
+                            currentFileName = file.nameWithoutExtension
+                            readQuestionsFromFile(file)
+                            currentScreen = "question"
+                        },
+                        onCreateManual = { currentScreen = "editor" },   // ← здесь
+                        onUploadClick = { openFilePickerAndReload() },
+                        onDeleteFile = { refreshFileList() },
+                        modifier = Modifier.padding(innerPadding)
+                    )
+
+
+                        "editor" -> TextEditorScreen(
+                            onRunTest = { file ->
                                 currentFileName = file.nameWithoutExtension
                                 readQuestionsFromFile(file)
+                                refreshFileList()
                                 currentScreen = "question"
                             },
-                            onUploadClick = {
-                                openFilePickerAndReload()
-                            },
-                            onDeleteFile = {
-                                refreshFileList()
-                            },
-                            modifier = Modifier.padding(innerPadding)
+                            onCancel = {
+                                currentScreen = "main"
+                            }
                         )
-
 
                         "question" -> QuestionViewer(
                             questions = questionsState.value,
@@ -167,6 +183,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
     // 📥 Открытие выбора файла
     private fun openFilePicker() {
@@ -236,6 +253,7 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     fileList: List<File>,
     onFileSelected: (File) -> Unit,
+    onCreateManual: () -> Unit,      // Добавили коллбек
     onUploadClick: () -> Unit,
     onDeleteFile: () -> Unit,
     modifier: Modifier = Modifier
@@ -254,17 +272,17 @@ fun MainScreen(
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             Text(
                 "Выберите загруженный файл:",
                 style = MaterialTheme.typography.titleMedium
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
 
             if (fileList.isEmpty()) {
                 Text("Нет загруженных файлов", style = MaterialTheme.typography.bodyMedium)
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
             }
 
             fileList.forEach { file ->
@@ -304,7 +322,34 @@ fun MainScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(Modifier.height(24.dp))
+
+            // Новая строка с двумя кнопками
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+            ) {
+                Button(
+                    onClick = onCreateManual,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Edit, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Создать тест")
+                }
+                Button(
+                    onClick = onUploadClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.UploadFile, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Импорт .txt")
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             Text(
                 text = "⚠ Формат: вопрос — на одной строке, ответ — на следующей. Без пустых строк.",
@@ -313,19 +358,88 @@ fun MainScreen(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+}
 
-        // 📁 Плавающая кнопка загрузки
-        FloatingActionButton(
-            onClick = onUploadClick,
+
+@Composable
+fun TextEditorScreen(
+    onRunTest: (File) -> Unit,
+    onCancel: () -> Unit
+) {
+    var filename by remember { mutableStateOf("") }
+    var text by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()) // 🔧 добавили прокрутку
+            .navigationBarsWithImePadding() // учитываем клавиатуру
+    ) {
+        Text("✍️ Введите вопросы в формате:", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Text("Вопрос?\nОтвет", style = MaterialTheme.typography.bodySmall)
+        Spacer(Modifier.height(16.dp))
+
+        TextField(
+            value = filename,
+            onValueChange = { filename = it },
             modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            containerColor = MaterialTheme.colorScheme.primary
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            placeholder = { Text("Название файла (без .txt)") },
+            label = { Text("Название файла") },
+            singleLine = true
+        )
+
+
+        TextField(
+            value = text,
+            onValueChange = { text = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 200.dp, max = 400.dp), // ✅ ограничиваем высоту
+            placeholder = { Text("Вопрос 1?\nОтвет 1\n\nВопрос 2?\nОтвет 2") }
+        )
+
+        Spacer(Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(Icons.Default.UploadFile, contentDescription = "Загрузить файл")
+            Button(onClick = { onCancel() }) {
+                Text("Отмена")
+            }
+
+            Button(
+                onClick = {
+                    val safeName = if (filename.isBlank()) {
+                        "user_file_${System.currentTimeMillis()}"
+                    } else {
+                        filename.trim()
+                    }
+
+                    val folder = File(context.filesDir, safeName)
+                    if (!folder.exists()) folder.mkdirs()
+
+                    val file = File(folder, "$safeName.txt")
+                    file.writeText(text)
+
+                    onRunTest(file)
+                },
+                enabled = text.isNotBlank()
+            )
+
+            {
+                Text("Сохранить")
+            }
         }
     }
 }
+
 
 
 @Composable
@@ -352,72 +466,48 @@ fun QuestionViewer(
     if (remainingQuestions.isNotEmpty()) {
         val current = remainingQuestions[currentIndex.coerceIn(0, remainingQuestions.lastIndex)]
 
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                "📖 Вопрос ${currentIndex + 1} из ${remainingQuestions.size}",
-                style = MaterialTheme.typography.titleLarge
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 🎯 Прогресс
-            Text(
-                "Изучено ${studiedQuestions.size} из ${questions.size}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // 🛠️ Настройки
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = isRandom, onCheckedChange = {
-                    isRandom = it
-                    currentIndex = 0
-                })
-                Text("Случайный порядок")
-            }
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = hideAnswers, onCheckedChange = { hideAnswers = it })
-                Text("Скрывать ответы")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
+        Box(modifier = Modifier.fillMaxSize()) {
+            // 📌 Верхняя прокручиваемая часть
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                elevation = CardDefaults.cardElevation(4.dp)
+                    .fillMaxSize()
+                    .padding(bottom = 180.dp)
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Box(
-                    modifier = Modifier
-                        .heightIn(min = 80.dp, max = 160.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                Spacer(modifier = Modifier.height(20.dp)) // ✅ вот эта строка опустит всё чуть ниже
+
+                // 🧾 Заголовок и настройки
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    elevation = CardDefaults.cardElevation(2.dp)
                 ) {
-                    Text(text = current.text, style = MaterialTheme.typography.bodyLarge)
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text("📖 Вопрос ${currentIndex + 1} из ${remainingQuestions.size}", style = MaterialTheme.typography.titleMedium)
+                        Text("Изучено ${studiedQuestions.size} из ${questions.size}", style = MaterialTheme.typography.bodySmall)
+
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = isRandom, onCheckedChange = {
+                                isRandom = it
+                                currentIndex = 0
+                            })
+                            Text("Случайный порядок")
+                        }
+
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = hideAnswers, onCheckedChange = { hideAnswers = it })
+                            Text("Скрывать ответы")
+                        }
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp)) //равстояние между боксом вопроса и верхнего бокса
 
-            if (hideAnswers && !showAnswer) {
-                Button(onClick = { showAnswer = true }) {
-                    Icon(Icons.Default.Visibility, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Показать ответ")
-                }
-
-                Spacer(modifier = Modifier.height(55.dp)) // 🔽 или больше, если нужно ещё ниже
-
-            } else {
+                // ❓ Вопрос
+                Text("❓ Вопрос:", style = MaterialTheme.typography.titleMedium)
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -430,75 +520,120 @@ fun QuestionViewer(
                             .verticalScroll(rememberScrollState())
                             .padding(16.dp)
                     ) {
-                        Text(text = "Ответ: ${current.answer}", style = MaterialTheme.typography.bodyMedium)
+                        Text(text = current.text, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(2.dp))
+
+                // 🔐 Ответ или кнопка
+                if (hideAnswers && !showAnswer) {
+                    Button(
+                        onClick = { showAnswer = true },
+                        modifier = Modifier.padding(vertical = 16.dp)
+                    ) {
+                        Icon(Icons.Default.Visibility, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Показать ответ")
+                    }
+                } else {
+                    Text("💬 Ответ:", style = MaterialTheme.typography.titleMedium)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        elevation = CardDefaults.cardElevation(4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .heightIn(min = 80.dp, max = 160.dp)
+                                .verticalScroll(rememberScrollState())
+                                .padding(16.dp)
+                        ) {
+                            Text(text = current.answer, style = MaterialTheme.typography.bodyMedium)
+                        }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // 🔘 Управление
-            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Button(
-                    onClick = { currentIndex--; showAnswer = false },
-                    enabled = currentIndex > 0
-                ) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = null)
-                    Spacer(Modifier.width(8.dp))
-                    Text("Назад")
-                }
-
-
-                Button(
-                    onClick = { currentIndex++; showAnswer = false },
-                    enabled = currentIndex < remainingQuestions.size - 1
-                ) {
-                    Text("Вперёд")
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.Default.ArrowForward, contentDescription = null)
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(onClick = { val realIndex = questions.indexOf(current)
-                studiedQuestions = studiedQuestions + realIndex
-                prefs.edit().putStringSet("studied", studiedQuestions.map { it.toString() }.toSet()).apply()
-                showAnswer = false
-                if (currentIndex < remainingQuestions.size - 1) {
-                    currentIndex += 1
-                } else {
-                    onBack()
-                }
-            }) {
-                Text("Изучен")
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Default.Check, contentDescription = null)
-            }
-
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(
-                onClick = {prefs.edit().remove("studied").apply()
-                    studiedQuestions = emptySet()
-                    currentIndex = 0},
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            // 📌 Нижняя часть: кнопки
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .navigationBarsPadding(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("Сбросить прогресс")
-                Spacer(Modifier.width(8.dp))
-                Icon(Icons.Default.Restore, contentDescription = null)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Button(
+                        onClick = { currentIndex--; showAnswer = false },
+                        enabled = currentIndex > 0,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Назад")
+                    }
+
+                    Spacer(Modifier.width(12.dp))
+
+                    Button(
+                        onClick = { currentIndex++; showAnswer = false },
+                        enabled = currentIndex < remainingQuestions.size - 1,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Вперёд")
+                        Spacer(Modifier.width(4.dp))
+                        Icon(Icons.Default.ArrowForward, contentDescription = null)
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(onClick = {
+                        val realIndex = questions.indexOf(current)
+                        studiedQuestions = studiedQuestions + realIndex
+                        prefs.edit().putStringSet("studied", studiedQuestions.map { it.toString() }.toSet()).apply()
+                        showAnswer = false
+                        if (currentIndex < remainingQuestions.size - 1) {
+                            currentIndex++
+                        } else {
+                            onBack()
+                        }
+                    }) {
+                        Icon(Icons.Default.Check, contentDescription = null)
+                        Text("Изучен")
+                    }
+
+                    Button(
+                        onClick = {
+                            prefs.edit().remove("studied").apply()
+                            studiedQuestions = emptySet()
+                            currentIndex = 0
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                    ) {
+                        Icon(Icons.Default.Restore, contentDescription = null)
+                        Text("Сброс")
+                    }
+                }
+
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text("Назад к файлам")
+                }
             }
-
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Button(onClick = { onBack() }) {
-                Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Назад к файлам")
-            }
-
         }
     } else {
         Column(
@@ -519,6 +654,8 @@ fun QuestionViewer(
 
 
 
+
+
 private fun getStoredSet(context: Context, fileKey: String): Set<Int> {
     val prefs = context.getSharedPreferences("progress_$fileKey", ComponentActivity.MODE_PRIVATE)
     return prefs.getStringSet("studied", emptySet())?.mapNotNull { it.toIntOrNull() }?.toSet() ?: emptySet()
@@ -532,11 +669,12 @@ private fun getStoredSet(context: Context, fileKey: String): Set<Int> {
 fun GreetingPreview() {
     MyApplicationTheme {
         MainScreen(
-            fileList = emptyList(), // Просто заглушка
-            onFileSelected = {},
-            onUploadClick = {},
-            onDeleteFile = {},
-            modifier = Modifier
+            fileList        = emptyList(),
+            onFileSelected  = { },
+            onCreateManual  = { /* ничего */ },
+            onUploadClick   = { },
+            onDeleteFile    = { },
+            modifier        = Modifier
         )
     }
 }
