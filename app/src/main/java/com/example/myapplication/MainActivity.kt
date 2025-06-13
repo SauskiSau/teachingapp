@@ -44,7 +44,6 @@ import com.google.accompanist.insets.navigationBarsWithImePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 
 
-
 data class Question(
     val text: String,
     val answer: String

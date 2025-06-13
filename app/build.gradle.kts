@@ -51,7 +51,8 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.androidx.compose.window.insets)
     implementation("com.google.accompanist:accompanist-insets:0.28.0")
-
+    implementation("androidx.core:core-splashscreen:1.0.1")
+    implementation("com.google.android.material:material:1.11.0")
 
     // Compose Foundation — единственная строка, управляющаяся BOM
     implementation(libs.androidx.compose.foundation)
