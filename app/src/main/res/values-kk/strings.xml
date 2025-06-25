@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Quick Progress</string>
+    <string name="choose_file">Жүктелген файлды таңдаңыз:</string>
+    <string name="create_test">Тест жасау</string>
+    <string name="import_txt">.txt импорттау</string>
+    <string name="language">Тіл</string>
+    <string name="format_tip">⚠ Формат: сұрақ - бір жолда, жауап - келесі жолда. Бос жолдарсыз.</string>
+    <string name="no_files">Файлдар жүктелмеген</string>
+
+    <string name="question_number">📖 %1$d сұрақ, жалпы %2$d</string>
+    <string name="studied_questions">Үйренгені %1$d / %2$d</string>
+    <string name="shuffle_order">Кездейсоқ рет</string>
+    <string name="hide_answers">Жауапты жасыру</string>
+    <string name="question">Сұрақ</string>
+    <string name="answer">Жауап</string>
+    <string name="show_answer">Жауабын көрсету</string>
+    <string name="back">Артқа</string>
+    <string name="forward">Алға</string>
+    <string name="mark_as_learned">Үйренген ретінде</string>
+    <string name="reset">Қалпына келтіру</string>
+    <string name="back_to_files">Файлдарға қайту</string>
+    <string name="all_questions_learned">🎉 Барлық сұрақтар үйренілді!</string>
+</resources>

@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">Quick Progress</string>
+    <string name="choose_file">Выберите загруженный файл:</string>
+    <string name="create_test">Создать тест</string>
+    <string name="import_txt">Импорт .txt</string>
+    <string name="language">Язык</string>
+    <string name="format_tip">⚠ Формат: вопрос — на одной строке, ответ — на следующей. Без пустых строк.</string>
+    <string name="no_files">Файлы не загружены</string>
+
+    <string name="question_number">📖 Вопрос %1$d из %2$d</string>
+    <string name="studied_questions">Изучено %1$d из %2$d</string>
+    <string name="shuffle_order">Случайный порядок</string>
+    <string name="hide_answers">Скрывать ответы</string>
+    <string name="question">Вопрос</string>
+    <string name="answer">Ответ</string>
+    <string name="show_answer">Показать ответ</string>
+    <string name="back">Назад</string>
+    <string name="forward">Вперёд</string>
+    <string name="mark_as_learned">Изучен</string>
+    <string name="reset">Сброс</string>
+    <string name="back_to_files">Назад к файлам</string>
+    <string name="all_questions_learned">🎉 Все вопросы изучены!</string>
+</resources>

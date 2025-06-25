@@ -42,6 +42,13 @@ import java.io.File
 import androidx.compose.material.icons.filled.Edit
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.material.icons.filled.Language
+import com.example.myapplication.setAppLocale
+import com.example.myapplication.restartApp
+import android.app.Activity
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.stringResource
+import com.example.myapplication.R
 
 
 data class Question(
@@ -124,14 +131,28 @@ class MainActivity : ComponentActivity() {
         fileListState = getFileList(filesDir)
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val language = prefs.getString("app_language", "ru") ?: "ru"
+        val contextWithLocale = setAppLocale(newBase, language)
+        super.attachBaseContext(contextWithLocale)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val prefs = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        val language = prefs.getString("app_language", "ru") ?: "ru"
+        setAppLocale(this, language)
+
         questionsState.value = emptyList()
         currentScreen = "main"
 
         enableEdgeToEdge()
 
         refreshFileList() // ✅ Загружаем список файлов при старте
+
+
 
         setContent {
             MyApplicationTheme {
@@ -252,11 +273,15 @@ class MainActivity : ComponentActivity() {
 fun MainScreen(
     fileList: List<File>,
     onFileSelected: (File) -> Unit,
-    onCreateManual: () -> Unit,      // Добавили коллбек
+    onCreateManual: () -> Unit,
     onUploadClick: () -> Unit,
     onDeleteFile: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var languageMenuExpanded by remember { mutableStateOf(false) }
+
     Box(modifier = modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
@@ -267,20 +292,23 @@ fun MainScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                "📘 Quick Progress",
+                text = stringResource(id = R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
             Spacer(Modifier.height(16.dp))
 
             Text(
-                "Выберите загруженный файл:",
+                text = stringResource(id = R.string.choose_file),
                 style = MaterialTheme.typography.titleMedium
             )
             Spacer(Modifier.height(16.dp))
 
             if (fileList.isEmpty()) {
-                Text("Нет загруженных файлов", style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = stringResource(id = R.string.no_files),
+                    style = MaterialTheme.typography.bodyMedium
+                )
                 Spacer(Modifier.height(24.dp))
             }
 
@@ -303,7 +331,7 @@ fun MainScreen(
                             style = MaterialTheme.typography.bodyLarge
                         )
                         IconButton(onClick = { onFileSelected(file) }) {
-                            Icon(Icons.Default.PlayArrow, contentDescription = "Открыть")
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Open")
                         }
                         IconButton(
                             onClick = {
@@ -313,7 +341,7 @@ fun MainScreen(
                         ) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Удалить",
+                                contentDescription = "Delete",
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -323,7 +351,6 @@ fun MainScreen(
 
             Spacer(Modifier.height(24.dp))
 
-            // Новая строка с двумя кнопками
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -336,7 +363,7 @@ fun MainScreen(
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Создать тест")
+                    Text(text = stringResource(id = R.string.create_test))
                 }
                 Button(
                     onClick = onUploadClick,
@@ -344,14 +371,65 @@ fun MainScreen(
                 ) {
                     Icon(Icons.Default.UploadFile, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text("Импорт .txt")
+                    Text(text = stringResource(id = R.string.import_txt))
                 }
             }
 
             Spacer(Modifier.height(24.dp))
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(onClick = { languageMenuExpanded = true }) {
+                    Icon(Icons.Default.Language, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(text = stringResource(id = R.string.language))
+                }
+
+                DropdownMenu(
+                    expanded = languageMenuExpanded,
+                    onDismissRequest = { languageMenuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = { Text("Қазақша") },
+                        onClick = {
+                            languageMenuExpanded = false
+                            saveLanguagePreference(context, "kk")
+                            setAppLocale(context, "kk")
+                            Toast.makeText(context, "Қазақ тілі таңдалды", Toast.LENGTH_SHORT).show()
+                            activity?.let { restartApp(it) }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("English") },
+                        onClick = {
+                            languageMenuExpanded = false
+                            saveLanguagePreference(context, "en")
+                            setAppLocale(context, "en")
+                            Toast.makeText(context, "English selected", Toast.LENGTH_SHORT).show()
+                            activity?.let { restartApp(it) }
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Русский") },
+                        onClick = {
+                            languageMenuExpanded = false
+                            saveLanguagePreference(context, "ru")
+                            setAppLocale(context, "ru")
+                            Toast.makeText(context, "Выбран русский язык", Toast.LENGTH_SHORT).show()
+                            activity?.let { restartApp(it) }
+                        }
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+
             Text(
-                text = "⚠ Формат: вопрос — на одной строке, ответ — на следующей. Без пустых строк.",
+                text = stringResource(id = R.string.format_tip),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.fillMaxWidth()
@@ -359,6 +437,7 @@ fun MainScreen(
         }
     }
 }
+
 
 
 @Composable
@@ -483,8 +562,8 @@ fun QuestionViewer(
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("📖 Вопрос ${currentIndex + 1} из ${remainingQuestions.size}", style = MaterialTheme.typography.titleMedium)
-                        Text("Изучено ${studiedQuestions.size} из ${questions.size}", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.question_number, currentIndex + 1, remainingQuestions.size))
+                        Text(stringResource(R.string.studied_questions, studiedQuestions.size, questions.size))
 
                         Divider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -493,12 +572,12 @@ fun QuestionViewer(
                                 isRandom = it
                                 currentIndex = 0
                             })
-                            Text("Случайный порядок")
+                            Text(stringResource(R.string.shuffle_order))
                         }
 
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(checked = hideAnswers, onCheckedChange = { hideAnswers = it })
-                            Text("Скрывать ответы")
+                            Text(stringResource(R.string.hide_answers))
                         }
                     }
                 }
@@ -506,7 +585,7 @@ fun QuestionViewer(
                 Spacer(modifier = Modifier.height(10.dp)) //равстояние между боксом вопроса и верхнего бокса
 
                 // ❓ Вопрос
-                Text("❓ Вопрос:", style = MaterialTheme.typography.titleMedium)
+                Text("❓ " + stringResource(R.string.question))
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -533,10 +612,10 @@ fun QuestionViewer(
                     ) {
                         Icon(Icons.Default.Visibility, contentDescription = null)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Показать ответ")
+                        Text(stringResource(R.string.show_answer))  // кнопка
                     }
                 } else {
-                    Text("💬 Ответ:", style = MaterialTheme.typography.titleMedium)
+                    Text("💬 " + stringResource(R.string.answer))
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -576,7 +655,7 @@ fun QuestionViewer(
                     ) {
                         Icon(Icons.Default.ArrowBack, contentDescription = null)
                         Spacer(Modifier.width(4.dp))
-                        Text("Назад")
+                        Text(stringResource(R.string.back))
                     }
 
                     Spacer(Modifier.width(12.dp))
@@ -586,7 +665,7 @@ fun QuestionViewer(
                         enabled = currentIndex < remainingQuestions.size - 1,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Text("Вперёд")
+                        Text(stringResource(R.string.forward))
                         Spacer(Modifier.width(4.dp))
                         Icon(Icons.Default.ArrowForward, contentDescription = null)
                     }
@@ -608,7 +687,7 @@ fun QuestionViewer(
                         }
                     }) {
                         Icon(Icons.Default.Check, contentDescription = null)
-                        Text("Изучен")
+                        Text(stringResource(R.string.mark_as_learned))
                     }
 
                     Button(
@@ -620,7 +699,7 @@ fun QuestionViewer(
                         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
                     ) {
                         Icon(Icons.Default.Restore, contentDescription = null)
-                        Text("Сброс")
+                        Text(stringResource(R.string.reset))
                     }
                 }
 
@@ -630,7 +709,7 @@ fun QuestionViewer(
                 ) {
                     Icon(Icons.Default.KeyboardArrowLeft, contentDescription = null)
                     Spacer(Modifier.width(4.dp))
-                    Text("Назад к файлам")
+                    Text(stringResource(R.string.back_to_files))
                 }
             }
         }
@@ -642,10 +721,10 @@ fun QuestionViewer(
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("🎉 Все вопросы изучены!", style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.all_questions_learned))
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { onBack() }) {
-                Text("⬅ Назад к файлам")
+                Text("⬅ " + stringResource(R.string.back_to_files))
             }
         }
     }
