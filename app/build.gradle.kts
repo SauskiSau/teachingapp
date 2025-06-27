@@ -53,6 +53,11 @@ dependencies {
     implementation("com.google.accompanist:accompanist-insets:0.28.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("com.google.android.material:material:1.11.0")
+    implementation("androidx.navigation:navigation-compose:2.7.5") // или последняя версия
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+    implementation("androidx.compose.ui:ui:1.6.0")
+    implementation("androidx.compose.material:material:1.6.0")
+
 
     // Compose Foundation — единственная строка, управляющаяся BOM
     implementation(libs.androidx.compose.foundation)

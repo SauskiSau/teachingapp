@@ -49,6 +49,17 @@ import android.app.Activity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.stringResource
 import com.example.myapplication.R
+import androidx.compose.runtime.Composable
+import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.compose.material.icons.filled.Info
+import com.example.myapplication.AboutScreen
 
 
 data class Question(
@@ -145,66 +156,68 @@ class MainActivity : ComponentActivity() {
         val language = prefs.getString("app_language", "ru") ?: "ru"
         setAppLocale(this, language)
 
-        questionsState.value = emptyList()
-        currentScreen = "main"
-
         enableEdgeToEdge()
-
         refreshFileList() // ✅ Загружаем список файлов при старте
+
 
 
 
         setContent {
             MyApplicationTheme {
-                // 🔙 Обработка кнопки "Назад"
-                BackHandler(enabled = currentScreen != "main") {
-                    questionsState.value = emptyList()
-                    currentScreen = "main"
-                }
-                // 🧱 Основная оболочка интерфейса
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    when (currentScreen) {
-                        "main" -> MainScreen(
-                        fileList = fileListState,
-                        onFileSelected = { file ->
-                            currentFileName = file.nameWithoutExtension
-                            readQuestionsFromFile(file)
-                            currentScreen = "question"
-                        },
-                        onCreateManual = { currentScreen = "editor" },   // ← здесь
-                        onUploadClick = { openFilePickerAndReload() },
-                        onDeleteFile = { refreshFileList() },
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                val navController = rememberNavController()
+                val context = LocalContext.current
+                val activity = context as? Activity
 
+                NavHost(navController = navController, startDestination = "main") {
 
-                        "editor" -> TextEditorScreen(
+                    composable("main") {
+                        MainScreen(
+                            fileList = fileListState,
+                            onFileSelected = { file ->
+                                currentFileName = file.nameWithoutExtension
+                                readQuestionsFromFile(file)
+                                navController.navigate("question")
+                            },
+                            onCreateManual = { navController.navigate("editor") },
+                            onUploadClick = { openFilePickerAndReload() },
+                            onDeleteFile = { refreshFileList() },
+                            onAboutClick = { navController.navigate("about") }
+                        )
+                    }
+
+                    composable("editor") {
+                        TextEditorScreen(
                             onRunTest = { file ->
                                 currentFileName = file.nameWithoutExtension
                                 readQuestionsFromFile(file)
                                 refreshFileList()
-                                currentScreen = "question"
+                                navController.navigate("question")
                             },
                             onCancel = {
-                                currentScreen = "main"
+                                navController.popBackStack()
                             }
                         )
+                    }
 
-                        "question" -> QuestionViewer(
+                    composable("question") {
+                        QuestionViewer(
                             questions = questionsState.value,
                             fileKey = currentFileName,
-                            modifier = Modifier.padding(innerPadding),
                             onBack = {
                                 questionsState.value = emptyList()
-                                currentScreen = "main"
+                                navController.popBackStack()
                             }
                         )
+                    }
+
+                    composable("about") {
+                        AboutScreen(onBack = { navController.popBackStack() })
                     }
                 }
             }
         }
-
     }
+
     // 📥 Открытие выбора файла
     private fun openFilePicker() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
@@ -276,6 +289,7 @@ fun MainScreen(
     onCreateManual: () -> Unit,
     onUploadClick: () -> Unit,
     onDeleteFile: () -> Unit,
+    onAboutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -283,27 +297,35 @@ fun MainScreen(
     var languageMenuExpanded by remember { mutableStateOf(false) }
 
     Box(modifier = modifier.fillMaxSize()) {
+
+        // 🧱 Вся вертикальная структура экрана с прокруткой и отступами
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(24.dp),
+                .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 80.dp), // ⬆⬇ отступы
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // 🧠 Название приложения
             Text(
                 text = stringResource(id = R.string.app_name),
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
+
             Spacer(Modifier.height(16.dp))
 
+            // 📂 Подпись "выберите файл"
             Text(
                 text = stringResource(id = R.string.choose_file),
                 style = MaterialTheme.typography.titleMedium
             )
+
             Spacer(Modifier.height(16.dp))
 
+            // 📭 Если файлов нет — сообщение
             if (fileList.isEmpty()) {
                 Text(
                     text = stringResource(id = R.string.no_files),
@@ -312,6 +334,7 @@ fun MainScreen(
                 Spacer(Modifier.height(24.dp))
             }
 
+            // 📁 Список файлов
             fileList.forEach { file ->
                 Card(
                     modifier = Modifier
@@ -322,7 +345,7 @@ fun MainScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(16.dp),
+                            .padding(10.dp), //высота боксов списка файлов
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
@@ -351,6 +374,7 @@ fun MainScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // ➕ Кнопки: создать файл и импортировать
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -377,66 +401,83 @@ fun MainScreen(
 
             Spacer(Modifier.height(24.dp))
 
+            // ℹ️ Кнопки: "О приложении" и "Язык"
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
             ) {
-                Button(onClick = { languageMenuExpanded = true }) {
+                Button(
+                    onClick = onAboutClick,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("About the App")
+                }
+
+                Button(
+                    onClick = { languageMenuExpanded = true },
+                    modifier = Modifier.weight(1f)
+                ) {
                     Icon(Icons.Default.Language, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(text = stringResource(id = R.string.language))
                 }
-
-                DropdownMenu(
-                    expanded = languageMenuExpanded,
-                    onDismissRequest = { languageMenuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Қазақша") },
-                        onClick = {
-                            languageMenuExpanded = false
-                            saveLanguagePreference(context, "kk")
-                            setAppLocale(context, "kk")
-                            Toast.makeText(context, "Қазақ тілі таңдалды", Toast.LENGTH_SHORT).show()
-                            activity?.let { restartApp(it) }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("English") },
-                        onClick = {
-                            languageMenuExpanded = false
-                            saveLanguagePreference(context, "en")
-                            setAppLocale(context, "en")
-                            Toast.makeText(context, "English selected", Toast.LENGTH_SHORT).show()
-                            activity?.let { restartApp(it) }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Русский") },
-                        onClick = {
-                            languageMenuExpanded = false
-                            saveLanguagePreference(context, "ru")
-                            setAppLocale(context, "ru")
-                            Toast.makeText(context, "Выбран русский язык", Toast.LENGTH_SHORT).show()
-                            activity?.let { restartApp(it) }
-                        }
-                    )
-                }
             }
 
-            Spacer(Modifier.height(16.dp))
+            // 🌐 Выпадающее меню выбора языка
+            DropdownMenu(
+                expanded = languageMenuExpanded,
+                onDismissRequest = { languageMenuExpanded = false }
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Қазақша") },
+                    onClick = {
+                        languageMenuExpanded = false
+                        saveLanguagePreference(context, "kk")
+                        setAppLocale(context, "kk")
+                        Toast.makeText(context, "Қазақ тілі таңдалды", Toast.LENGTH_SHORT).show()
+                        activity?.let { restartApp(it) }
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("English") },
+                    onClick = {
+                        languageMenuExpanded = false
+                        saveLanguagePreference(context, "en")
+                        setAppLocale(context, "en")
+                        Toast.makeText(context, "English selected", Toast.LENGTH_SHORT).show()
+                        activity?.let { restartApp(it) }
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("Русский") },
+                    onClick = {
+                        languageMenuExpanded = false
+                        saveLanguagePreference(context, "ru")
+                        setAppLocale(context, "ru")
+                        Toast.makeText(context, "Выбран русский язык", Toast.LENGTH_SHORT).show()
+                        activity?.let { restartApp(it) }
+                    }
+                )
+            }
 
+            Spacer(Modifier.height(24.dp))
+
+            // 📌 Подсказка по формату вопросов
             Text(
                 text = stringResource(id = R.string.format_tip),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
         }
     }
 }
+
 
 
 
@@ -531,15 +572,26 @@ fun QuestionViewer(
     val prefs = context.getSharedPreferences("progress_$fileKey", ComponentActivity.MODE_PRIVATE)
     val savedSet = prefs.getStringSet("studied", emptySet()) ?: emptySet()
     var studiedQuestions by remember { mutableStateOf(savedSet.mapNotNull { it.toIntOrNull() }.toSet()) }
-
+    var shuffledQuestions by remember { mutableStateOf<List<Question>>(emptyList()) }
+    var remainingQuestions by remember { mutableStateOf<List<Question>>(emptyList()) }
     var currentIndex by remember { mutableStateOf(0) }
     var isRandom by remember { mutableStateOf(false) }
     var hideAnswers by remember { mutableStateOf(true) }
     var showAnswer by remember { mutableStateOf(false) }
 
-    val remainingQuestions = questions
-        .filterIndexed { index, _ -> index !in studiedQuestions }
-        .let { if (isRandom) it.shuffled() else it }
+    LaunchedEffect(isRandom, studiedQuestions) {
+        val filtered = questions.filterIndexed { index, _ -> index !in studiedQuestions }
+
+        remainingQuestions = if (isRandom) {
+            filtered.shuffled()
+        } else {
+            filtered
+        }
+
+        currentIndex = 0
+        showAnswer = false
+    }
+
 
     if (remainingQuestions.isNotEmpty()) {
         val current = remainingQuestions[currentIndex.coerceIn(0, remainingQuestions.lastIndex)]
@@ -752,6 +804,7 @@ fun GreetingPreview() {
             onCreateManual  = { /* ничего */ },
             onUploadClick   = { },
             onDeleteFile    = { },
+            onAboutClick    = { },
             modifier        = Modifier
         )
     }

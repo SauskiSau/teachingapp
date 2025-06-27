@@ -2,7 +2,7 @@
     <string name="app_name">Quick Progress</string>
     <string name="choose_file">Жүктелген файлды таңдаңыз:</string>
     <string name="create_test">Тест жасау</string>
-    <string name="import_txt">.txt импорттау</string>
+    <string name="import_txt">.txt импорт</string>
     <string name="language">Тіл</string>
     <string name="format_tip">⚠ Формат: сұрақ - бір жолда, жауап - келесі жолда. Бос жолдарсыз.</string>
     <string name="no_files">Файлдар жүктелмеген</string>
