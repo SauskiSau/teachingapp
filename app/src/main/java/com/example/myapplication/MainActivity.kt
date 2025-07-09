@@ -99,7 +99,7 @@ class MainActivity : ComponentActivity() {
                     continue
                 }
 
-                // Формат 1: вопрос и ответ на одной строке через ?
+                // Формат 1: Вопрос и ответ на одной строке через ?
                 if ('?' in line && !line.endsWith("?") && line.count { it == '?' } == 1) {
                     val parts = line.split("?")
                     val questionText = parts[0].trim() + "?"
@@ -108,22 +108,28 @@ class MainActivity : ComponentActivity() {
                     i++
                 }
 
-                // Формат 2: вопрос и ответ на следующей строке (возможно с "Ответ:")
-                else if (i + 1 < lines.size && lines[i].trim().endsWith("?")) {
-                    val questionText = lines[i].trim()
+                // Формат 2: Вопрос на строке, ответ на следующей
+                else if (i + 1 < lines.size && line.endsWith("?")) {
+                    val questionText = line
                     val nextLine = lines[i + 1].trim()
-
                     val answerText = if (nextLine.lowercase().startsWith("ответ:")) {
                         nextLine.removePrefix("Ответ:").removePrefix("ответ:").trim()
                     } else {
                         nextLine
                     }
-
                     questions.add(Question(questionText, answerText))
                     i += 2
                 }
 
-                // Неизвестный формат
+                // ✅ Формат 3: просто две строки подряд — вопрос и ответ
+                else if (i + 1 < lines.size && lines[i + 1].trim().isNotEmpty()) {
+                    val questionText = line
+                    val answerText = lines[i + 1].trim()
+                    questions.add(Question(questionText, answerText))
+                    i += 2
+                }
+
+                // Неизвестный формат — пропускаем строку
                 else {
                     i++
                 }
@@ -137,6 +143,7 @@ class MainActivity : ComponentActivity() {
             Toast.makeText(this, "Ошибка чтения файла", Toast.LENGTH_SHORT).show()
         }
     }
+
     // 📂 Обновление списка файлов
     private fun refreshFileList() {
         fileListState = getFileList(filesDir)
@@ -188,10 +195,10 @@ class MainActivity : ComponentActivity() {
                     composable("editor") {
                         TextEditorScreen(
                             onRunTest = { file ->
-                                currentFileName = file.nameWithoutExtension
-                                readQuestionsFromFile(file)
                                 refreshFileList()
-                                navController.navigate("question")
+                                navController.navigate("main") {
+                                    popUpTo("main") { inclusive = true }
+                                }
                             },
                             onCancel = {
                                 navController.popBackStack()
@@ -773,13 +780,29 @@ fun QuestionViewer(
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(stringResource(R.string.all_questions_learned))
+            Text("🎉 Все вопросы изучены!", style = MaterialTheme.typography.titleMedium)
             Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    prefs.edit().remove("studied").apply()
+                    studiedQuestions = emptySet()
+                    currentIndex = 0
+                }
+            ) {
+                Icon(Icons.Default.Restore, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("🔄 Сбросить прогресс")
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             Button(onClick = { onBack() }) {
-                Text("⬅ " + stringResource(R.string.back_to_files))
+                Text("⬅ Назад к файлам")
             }
         }
     }
+
 }
 
 

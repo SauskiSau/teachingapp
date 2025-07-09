@@ -1,7 +1,7 @@
 package com.example.myapplication
 
-
-import androidx.compose.runtime.Composable
+import android.content.pm.PackageManager
+import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -12,10 +12,19 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val versionName = remember {
+        try {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            "N/A"
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -27,6 +36,7 @@ fun AboutScreen(onBack: () -> Unit) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text("📱 Name: Quick Progress")
+        Text("📦 Version: $versionName") // ✅ версия тут
         Text("👨‍🔬 Developer: Sauletbek Lab")
         Spacer(modifier = Modifier.height(16.dp))
 
