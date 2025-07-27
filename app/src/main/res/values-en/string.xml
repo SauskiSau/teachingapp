@@ -4,11 +4,21 @@
     <string name="create_test">Create test</string>
     <string name="import_txt">Import .txt</string>
     <string name="language">Language</string>
-    <string name="format_tip">⚠ Format: question — on one line, answer — on the next. No empty lines.</string>
+    <string name="format_tip">⚠ Format: question — on one line, answer — on the next. Leave an empty line after each Q&amp;A pair.</string>
     <string name="no_files">No uploaded files</string>
 
+    <string name="support_project">Support the Project</string>
+
+    <string name="about_app">About the App</string>
+    <string name="version">Version</string>
+    <string name="developer">Developer</string>
+    <string name="contacts">Contacts</string>
+    <string name="support_project_question">Want to support the project?</string>
+    <string name="kaspi_qr_note">📱 Scan with Kaspi.kz app</string>
+
+
     <string name="question_number">📖 Question %1$d of %2$d</string>
-    <string name="studied_questions">Studied %1$d of %2$d</string>
+    <string name="studied_questions">🧠 Studied %1$d of %2$d</string>
     <string name="shuffle_order">Shuffle order</string>
     <string name="hide_answers">Hide answers</string>
     <string name="question">Question</string>
@@ -20,4 +30,15 @@
     <string name="reset">Reset</string>
     <string name="back_to_files">Back to files</string>
     <string name="all_questions_learned">🎉 All questions learned!</string>
+
+    <string name="enter_questions">✍️ Enter questions in the format:</string>
+    <string name="format_example">Question?\nAnswer</string>
+    <string name="text_field_hint">Question 1?\nAnswer 1\n\nQuestion 2?\nAnswer 2</string>
+    <string name="save_test">Save Test</string>
+    <string name="cancel">Cancel</string>
+
+
+    <string name="filename_placeholder">File name (no .txt needed)</string>
+    <string name="filename_label">File name</string>
+
 </resources>

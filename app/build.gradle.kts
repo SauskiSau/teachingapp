@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapplication"
+    namespace = "com.sauletbek.quickprogress"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myapplication"
+        applicationId = "com.sauletbek.quickprogress"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -18,26 +18,40 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("${project.rootDir}/keystore") // путь к файлу .jks
+            storePassword = "Sakenti4515!" // 🔐 сюда введи свой пароль
+            keyAlias = "quickprogresskey"
+            keyPassword = "Sakenti4515!"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = "11"
     }
+
     buildFeatures {
         compose = true
     }
 }
+
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -53,18 +67,13 @@ dependencies {
     implementation("com.google.accompanist:accompanist-insets:0.28.0")
     implementation("androidx.core:core-splashscreen:1.0.1")
     implementation("com.google.android.material:material:1.11.0")
-    implementation("androidx.navigation:navigation-compose:2.7.5") // или последняя версия
     implementation("androidx.navigation:navigation-compose:2.7.7")
     implementation("androidx.compose.ui:ui:1.6.0")
     implementation("androidx.compose.material:material:1.6.0")
 
-
-    // Compose Foundation — единственная строка, управляющаяся BOM
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.window.insets)
 
-
-    // Icons Extended (для Edit, UploadFile и т.д.)
     implementation("androidx.compose.material:material-icons-extended")
 
     debugImplementation(libs.androidx.ui.tooling)

@@ -4,11 +4,11 @@
     <string name="create_test">Тест жасау</string>
     <string name="import_txt">.txt импорт</string>
     <string name="language">Тіл</string>
-    <string name="format_tip">⚠ Формат: сұрақ - бір жолда, жауап - келесі жолда. Бос жолдарсыз.</string>
+    <string name="format_tip">⚠ Формат: сұрақ — бір жолда, жауап — келесі жолда. Әр сұрақ/жауап жұбынан кейін бір бос жол.</string>
     <string name="no_files">Файлдар жүктелмеген</string>
 
     <string name="question_number">📖 %1$d сұрақ, жалпы %2$d</string>
-    <string name="studied_questions">Үйренгені %1$d / %2$d</string>
+    <string name="studied_questions">🧠 Үйренгенім %1$d / %2$d</string>
     <string name="shuffle_order">Кездейсоқ рет</string>
     <string name="hide_answers">Жауапты жасыру</string>
     <string name="question">Сұрақ</string>
@@ -16,8 +16,30 @@
     <string name="show_answer">Жауабын көрсету</string>
     <string name="back">Артқа</string>
     <string name="forward">Алға</string>
-    <string name="mark_as_learned">Үйренген ретінде</string>
+    <string name="mark_as_learned">Жаттадым</string>
     <string name="reset">Қалпына келтіру</string>
     <string name="back_to_files">Файлдарға қайту</string>
     <string name="all_questions_learned">🎉 Барлық сұрақтар үйренілді!</string>
+
+    <string name="support_project">Жобаны қолдау</string>
+
+    <string name="about_app">Info</string>
+    <string name="version">Version</string>
+    <string name="developer">Әзірлеуші</string>
+    <string name="contacts">Байланыс</string>
+    <string name="support_project_question">Жобаны қолдағыңыз келе ме?</string>
+    <string name="kaspi_qr_note">📱 Kaspi.kz қосымшасымен сканерлеңіз</string>
+
+
+
+    <string name="enter_questions">✍️ Сұрақтарды келесі форматта енгізіңіз:</string>
+    <string name="format_example">Сұрақ?\nЖауап</string>
+    <string name="text_field_hint">Сұрақ 1?\nЖауап 1\n\nСұрақ 2?\nЖауап 2</string>
+    <string name="save_test">Тестті сақтау</string>
+    <string name="cancel">Бас тарту</string>
+
+    <string name="filename_placeholder">Файл атауы (.txt қажет емес)</string>
+    <string name="filename_label">Файл атауы</string>
+
+
 </resources>

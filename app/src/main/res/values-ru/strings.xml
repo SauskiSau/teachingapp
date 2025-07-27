@@ -1,14 +1,14 @@
 <resources>
     <string name="app_name">Quick Progress</string>
     <string name="choose_file">Выберите загруженный файл:</string>
-    <string name="create_test">Создать тест</string>
+    <string name="create_test">Новый тест</string>
     <string name="import_txt">Импорт .txt</string>
     <string name="language">Язык</string>
-    <string name="format_tip">⚠ Формат: вопрос — на одной строке, ответ — на следующей. Без пустых строк.</string>
+    <string name="format_tip">⚠ Формат: вопрос — в одной строке, ответ — на следующей. После каждого вопроса с ответом — пустая строка.</string>
     <string name="no_files">Файлы не загружены</string>
 
     <string name="question_number">📖 Вопрос %1$d из %2$d</string>
-    <string name="studied_questions">Изучено %1$d из %2$d</string>
+    <string name="studied_questions">🧠 Изучено %1$d из %2$d</string>
     <string name="shuffle_order">Случайный порядок</string>
     <string name="hide_answers">Скрывать ответы</string>
     <string name="question">Вопрос</string>
@@ -20,4 +20,25 @@
     <string name="reset">Сброс</string>
     <string name="back_to_files">Назад к файлам</string>
     <string name="all_questions_learned">🎉 Все вопросы изучены!</string>
+
+    <string name="enter_questions">✍️ Введите вопросы в формате:</string>
+    <string name="format_example">Вопрос?\nОтвет</string>
+    <string name="text_field_hint">Вопрос 1?\nОтвет 1\n\nВопрос 2?\nОтвет 2</string>
+    <string name="save_test">Сохранить тест</string>
+    <string name="cancel">Отмена</string>
+
+    <string name="support_project">Поддержать проект</string>
+
+    <string name="about_app">Info</string>
+    <string name="version">Version</string>
+    <string name="developer">Разработчик</string>
+    <string name="contacts">Контакты</string>
+    <string name="support_project_question">Хотите поддержать проект?</string>
+    <string name="kaspi_qr_note">📱 Отсканируйте в приложении Kaspi.kz</string>
+
+
+    <string name="filename_placeholder">Имя файла (без .txt)</string>
+    <string name="filename_label">Имя файла</string>
+
+
 </resources>

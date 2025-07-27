@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.sauletbek.quickprogress
 
 
 import android.content.Context
@@ -7,7 +7,6 @@ import android.os.Build
 import java.util.Locale
 import android.app.Activity
 import android.content.Intent
-import com.example.myapplication.MainActivity
 
 
 fun setAppLocale(context: Context, languageCode: String): Context {

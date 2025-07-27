@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.sauletbek.quickprogress
 
 import android.content.Intent
 import android.net.Uri
@@ -16,11 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.myapplication.ui.theme.MyApplicationTheme
+import com.sauletbek.quickprogress.ui.theme.MyApplicationTheme
 import java.io.*
 import androidx.compose.ui.platform.LocalContext
 import android.content.Context
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.ui.text.style.TextAlign
@@ -31,7 +30,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
@@ -43,23 +41,17 @@ import androidx.compose.material.icons.filled.Edit
 import com.google.accompanist.insets.navigationBarsWithImePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material.icons.filled.Language
-import com.example.myapplication.setAppLocale
-import com.example.myapplication.restartApp
 import android.app.Activity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.stringResource
-import com.example.myapplication.R
+import com.sauletbek.quickprogress.R
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
-import androidx.compose.foundation.layout.*
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.compose.material.icons.filled.Info
-import com.example.myapplication.AboutScreen
+import androidx.compose.ui.text.style.TextOverflow
 
 
 data class Question(
@@ -310,10 +302,11 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(top = 24.dp, start = 24.dp, end = 24.dp, bottom = 80.dp), // ⬆⬇ отступы
+                .padding(horizontal = 24.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            Spacer(modifier = Modifier.height(32.dp))
 
             // 🧠 Название приложения
             Text(
@@ -390,21 +383,38 @@ fun MainScreen(
             ) {
                 Button(
                     onClick = onCreateManual,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .defaultMinSize(minHeight = 45.dp),
+                    contentPadding = PaddingValues(horizontal = 15.dp, vertical = 12.dp)
                 ) {
                     Icon(Icons.Default.Edit, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = stringResource(id = R.string.create_test))
+                    Text(
+                        text = stringResource(id = R.string.create_test),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
+
                 Button(
                     onClick = onUploadClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .defaultMinSize(minHeight = 45.dp),
+                    contentPadding = PaddingValues(horizontal = 15.dp, vertical = 12.dp)
                 ) {
                     Icon(Icons.Default.UploadFile, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = stringResource(id = R.string.import_txt))
+                    Text(
+                        text = stringResource(id = R.string.import_txt),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
+
+
 
             Spacer(Modifier.height(24.dp))
 
@@ -417,22 +427,37 @@ fun MainScreen(
             ) {
                 Button(
                     onClick = onAboutClick,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .defaultMinSize(minHeight = 45.dp, minWidth = 150.dp)
                 ) {
                     Icon(Icons.Default.Info, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("About the App")
+                    Text(
+                        text = "Info", // или stringResource(id = R.string.about)
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
                 Button(
                     onClick = { languageMenuExpanded = true },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .defaultMinSize(minHeight = 45.dp, minWidth = 150.dp)
                 ) {
                     Icon(Icons.Default.Language, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(text = stringResource(id = R.string.language))
+                    Text(
+                        text = stringResource(id = R.string.language),
+                        textAlign = TextAlign.Center,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
+
 
             // 🌐 Выпадающее меню выбора языка
             DropdownMenu(
@@ -500,13 +525,20 @@ fun TextEditorScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()) // 🔧 добавили прокрутку
-            .navigationBarsWithImePadding() // учитываем клавиатуру
+            .padding(30.dp)
+            .padding(top = 24.dp)
+            .verticalScroll(rememberScrollState())
+            .navigationBarsWithImePadding()
     ) {
-        Text("✍️ Введите вопросы в формате:", style = MaterialTheme.typography.titleMedium)
+        Text(
+            text = stringResource(id = R.string.enter_questions),
+            style = MaterialTheme.typography.titleMedium
+        )
         Spacer(Modifier.height(8.dp))
-        Text("Вопрос?\nОтвет", style = MaterialTheme.typography.bodySmall)
+        Text(
+            text = stringResource(id = R.string.format_example),
+            style = MaterialTheme.typography.bodySmall
+        )
         Spacer(Modifier.height(16.dp))
 
         TextField(
@@ -515,19 +547,18 @@ fun TextEditorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            placeholder = { Text("Название файла (без .txt)") },
-            label = { Text("Название файла") },
+            placeholder = { Text(stringResource(id = R.string.filename_placeholder)) },
+            label = { Text(stringResource(id = R.string.filename_label)) },
             singleLine = true
         )
-
 
         TextField(
             value = text,
             onValueChange = { text = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 200.dp, max = 400.dp), // ✅ ограничиваем высоту
-            placeholder = { Text("Вопрос 1?\nОтвет 1\n\nВопрос 2?\nОтвет 2") }
+                .heightIn(min = 200.dp, max = 400.dp),
+            placeholder = { Text(stringResource(id = R.string.text_field_hint)) }
         )
 
         Spacer(Modifier.height(16.dp))
@@ -537,7 +568,7 @@ fun TextEditorScreen(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Button(onClick = { onCancel() }) {
-                Text("Отмена")
+                Text(stringResource(id = R.string.cancel))
             }
 
             Button(
@@ -557,14 +588,13 @@ fun TextEditorScreen(
                     onRunTest(file)
                 },
                 enabled = text.isNotBlank()
-            )
-
-            {
-                Text("Сохранить")
+            ) {
+                Text(stringResource(id = R.string.save_test))
             }
         }
     }
 }
+
 
 
 
